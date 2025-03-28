@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (c) 2025, Matthieu Baerts.
 
-NS=rt
-HOSTS=(pho cli cpe cell net srv)
+export NS=rt
+export HOSTS=(pho cli cpe cell net srv)
 
 cleanup()
 {
@@ -15,6 +15,31 @@ cleanup()
 }
 
 trap cleanup EXIT
+
+cpe_switch_off()
+{
+	ip -n "${NS}_cpe" link set dev "pho" down
+	ip -n "${NS}_cpe" link set dev "cli" down
+	ip -n "${NS}_pho" link set "cpe" down
+	ip -n "${NS}_cli" link set "cpe" down
+
+	ip -n "${NS}_pho" link set "cli" up
+	ip -n "${NS}_cli" link set "pho" up
+	ip -n "${NS}_cli" route add default via 10.0.1.1 dev "pho" metric 200
+}
+
+cpe_switch_on()
+{
+	ip -n "${NS}_pho" link set "cli" down
+	ip -n "${NS}_cli" link set "pho" down
+
+	ip -n "${NS}_cpe" link set dev "pho" up
+	ip -n "${NS}_cpe" link set dev "cli" up
+	ip -n "${NS}_pho" link set "cpe" up
+	ip -n "${NS}_cli" link set "cpe" up
+	ip -n "${NS}_pho" route add default via 10.0.0.1 dev "cpe" metric 100
+	ip -n "${NS}_cli" route add default via 10.0.0.1 dev "cpe" metric 100
+}
 
 setup()
 {
@@ -44,7 +69,7 @@ setup()
 	ip -n "${NS}_pho" link set "cpe" up
 	ip -n "${NS}_pho" addr add dev "cpe" 10.0.0.2/24
 	ip -n "${NS}_pho" route add default via 10.0.0.1 dev "cpe" metric 100
-	ip -n "${NS}_pho" link set "cli" up
+	ip -n "${NS}_pho" link set "cli" down
 	ip -n "${NS}_pho" addr add dev "cli" 10.0.1.1/24
 	ip -n "${NS}_pho" link set "net" up
 	ip -n "${NS}_pho" addr add dev "net" 10.0.3.2/24
@@ -53,9 +78,8 @@ setup()
 	ip -n "${NS}_cli" link set "cpe" up
 	ip -n "${NS}_cli" addr add dev "cpe" 10.0.0.3/24
 	ip -n "${NS}_cli" route add default via 10.0.0.1 dev "cpe" metric 100
-	ip -n "${NS}_cli" link set "pho" up
+	ip -n "${NS}_cli" link set "pho" down
 	ip -n "${NS}_cli" addr add dev "pho" 10.0.1.2/24
-	ip -n "${NS}_cli" route add default via 10.0.1.1 dev "pho" metric 200
 
 	ip -n "${NS}_cpe" link add name "br" type bridge
 	ip -n "${NS}_cpe" addr add dev "br" 10.0.0.1/24
@@ -85,4 +109,9 @@ setup()
 }
 
 setup
+
+export -f cpe_switch_on cpe_switch_off
+set +x
+echo "Use 'ip netns' to list the netns."
+echo "Then use 'ip netns exec <NETNS> <CMD>' to execute a command in the netns."
 bash
