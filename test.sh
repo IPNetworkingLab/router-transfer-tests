@@ -10,6 +10,7 @@ cleanup()
 	local suffix
 	for suffix in "${HOSTS[@]}"; do
 		local ns="${NS}_${suffix}"
+		ip netns pids "${ns}" | xargs -r kill
 		ip netns del "${ns}" >/dev/null 2>&1
 	done
 }
@@ -59,6 +60,22 @@ cpe_switch_on()
 	ip -n "${NS}_cli" route add default via 10.0.0.1 dev "cpe" metric 100
 	sleep .1 # making sure the route is ready
 	ip -n "${NS}_cli" mptcp endpoint add 10.0.0.3 dev "cpe" id 1 subflow
+}
+
+iperf_test()
+{
+	ip netns exec rt_srv mptcpize run iperf3 -s -D
+	sleep .1 # making sure the daemon is launched
+	ip netns exec rt_cli mptcpize run iperf3 -c 10.0.4.2 -t 999 -i 0 &
+	ip netns exec rt_cli ifstat -b -i cpe,pho &
+	for _ in $(seq 4); do
+		sleep 5
+		cpe_switch_off
+		sleep 5
+		cpe_switch_on
+	done
+	killall iperf3 ifstat
+	bash
 }
 
 setup()
@@ -134,7 +151,14 @@ setup()
 
 setup
 
-export -f cpe_switch_on cpe_switch_off
-echo "Use 'ip netns' to list the netns."
-echo "Then use 'ip netns exec <NETNS> <CMD>' to execute a command in the netns."
-bash
+case "${1}" in
+	"auto")
+		iperf_test
+		;;
+	*)
+		export -f cpe_switch_on cpe_switch_off iperf_test
+		echo "Use 'ip netns' to list the netns."
+		echo "Then use 'ip netns exec <NETNS> <CMD>' to execute a command in the netns."
+		bash
+		;;
+esac
