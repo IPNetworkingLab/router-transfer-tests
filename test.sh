@@ -22,8 +22,10 @@ cpe_switch_off()
 	ip -n "${NS}_cpe" link set dev "cli" down
 	ip -n "${NS}_pho" link set "cpe" down
 	ip -n "${NS}_pho" addr del dev "cpe" 10.0.0.2/24
+	ip -n "${NS}_pho" mptcp endpoint del id 1
 	ip -n "${NS}_cli" link set "cpe" down
 	ip -n "${NS}_cli" addr del dev "cpe" 10.0.0.3/24
+	ip -n "${NS}_cli" mptcp endpoint del id 1
 
 	ip -n "${NS}_pho" link set "cli" up
 	ip -n "${NS}_pho" addr add dev "cli" 10.0.1.1/24
@@ -31,6 +33,8 @@ cpe_switch_off()
 	ip -n "${NS}_cli" link set "pho" up
 	ip -n "${NS}_cli" addr add dev "pho" 10.0.1.2/24
 	ip -n "${NS}_cli" route add default via 10.0.1.1 dev "pho" metric 200
+	sleep .1 # making sure the route is ready
+	ip -n "${NS}_cli" mptcp endpoint add 10.0.1.2 dev "pho" id 2 subflow
 }
 
 cpe_switch_on()
@@ -39,6 +43,7 @@ cpe_switch_on()
 	ip -n "${NS}_pho" addr del dev "cli" 10.0.1.1/24
 	ip -n "${NS}_cli" link set "pho" down
 	ip -n "${NS}_cli" addr del dev "pho" 10.0.1.2/24
+	ip -n "${NS}_cli" mptcp endpoint del id 2
 
 	ip -n "${NS}_cpe" link set dev "pho" up
 	ip -n "${NS}_cpe" link set dev "cli" up
@@ -46,10 +51,14 @@ cpe_switch_on()
 	ip -n "${NS}_pho" link set "cpe" up
 	ip -n "${NS}_pho" addr add dev "cpe" 10.0.0.2/24
 	ip -n "${NS}_pho" route add default via 10.0.0.1 dev "cpe" metric 100
+	sleep .1 # making sure the route is ready
+	ip -n "${NS}_pho" mptcp endpoint add 10.0.0.2 dev "cpe" id 1 subflow
 
 	ip -n "${NS}_cli" link set "cpe" up
 	ip -n "${NS}_cli" addr add dev "cpe" 10.0.0.3/24
 	ip -n "${NS}_cli" route add default via 10.0.0.1 dev "cpe" metric 100
+	sleep .1 # making sure the route is ready
+	ip -n "${NS}_cli" mptcp endpoint add 10.0.0.3 dev "cpe" id 1 subflow
 }
 
 setup()
@@ -80,13 +89,16 @@ setup()
 	ip -n "${NS}_pho" link set "cpe" up
 	ip -n "${NS}_pho" addr add dev "cpe" 10.0.0.2/24
 	ip -n "${NS}_pho" route add default via 10.0.0.1 dev "cpe" metric 100
+	ip -n "${NS}_pho" mptcp endpoint add 10.0.0.2 dev "cpe" id 1 subflow
 	ip -n "${NS}_pho" link set "net" up
 	ip -n "${NS}_pho" addr add dev "net" 10.0.3.2/24
 	ip -n "${NS}_pho" route add default via 10.0.3.1 dev "net" metric 200
+	ip -n "${NS}_pho" mptcp endpoint add 10.0.3.2 dev "net" id 2 subflow backup
 
 	ip -n "${NS}_cli" link set "cpe" up
 	ip -n "${NS}_cli" addr add dev "cpe" 10.0.0.3/24
 	ip -n "${NS}_cli" route add default via 10.0.0.1 dev "cpe" metric 100
+	ip -n "${NS}_cli" mptcp endpoint add 10.0.0.3 dev "cpe" id 1 subflow
 
 	ip -n "${NS}_cpe" link add name "br" type bridge
 	ip -n "${NS}_cpe" addr add dev "br" 10.0.0.1/24
@@ -113,6 +125,7 @@ setup()
 	ip -n "${NS}_srv" link set "net" up
 	ip -n "${NS}_srv" addr add dev "net" 10.0.4.2/24
 	ip -n "${NS}_srv" route add default via 10.0.4.1 dev "net" metric 100
+	ip -n "${NS}_srv" mptcp limits set subflows 8
 }
 
 setup
