@@ -94,6 +94,7 @@ setup()
 	ip -n "${NS}_pho" addr add dev "net" 10.0.3.2/24
 	ip -n "${NS}_pho" route add default via 10.0.3.1 dev "net" metric 200
 	ip -n "${NS}_pho" mptcp endpoint add 10.0.3.2 dev "net" id 2 subflow backup
+	tc -n "${NS}_pho" qdisc add dev "net" root netem rate 20mbit delay 10ms
 
 	ip -n "${NS}_cli" link set "cpe" up
 	ip -n "${NS}_cli" addr add dev "cpe" 10.0.0.3/24
@@ -110,11 +111,14 @@ setup()
 	ip -n "${NS}_cpe" link set "net" up
 	ip -n "${NS}_cpe" addr add dev "net" 10.0.2.2/24
 	ip -n "${NS}_cpe" route add default via 10.0.2.1 dev "net" metric 100
+	tc -n "${NS}_cpe" qdisc add dev "net" root netem rate 40mbit delay 5ms
 
 	ip -n "${NS}_net" link set "pho" up
 	ip -n "${NS}_net" addr add dev "pho" 10.0.3.1/24
+	tc -n "${NS}_net" qdisc add dev "pho" root netem rate 20mbit delay 10ms
 	ip -n "${NS}_net" link set "cpe" up
 	ip -n "${NS}_net" addr add dev "cpe" 10.0.2.1/24
+	tc -n "${NS}_net" qdisc add dev "cpe" root netem rate 40mbit delay 5ms
 	ip -n "${NS}_net" link set "srv" up
 	ip -n "${NS}_net" addr add dev "srv" 10.0.4.1/24
 	ip -n "${NS}_net" route add default via 10.0.4.2 dev "srv" metric 100
