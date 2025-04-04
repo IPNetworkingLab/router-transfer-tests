@@ -64,10 +64,10 @@ cpe_switch_on()
 
 iperf_test()
 {
-	ip netns exec rt_srv mptcpize run iperf3 -s -D
+	ip netns exec "${NS}_srv" mptcpize run iperf3 -s -D
 	sleep .1 # making sure the daemon is launched
-	ip netns exec rt_cli mptcpize run iperf3 -c 10.0.4.2 -t 999 -i 0 &
-	ip netns exec rt_cli ifstat -b -i cpe,pho &
+	ip netns exec "${NS}_cli" mptcpize run iperf3 -c 10.0.4.2 -t 999 -i 0 &
+	ip netns exec "${NS}_cli" ifstat -b -i cpe,pho &
 	for _ in $(seq 4); do
 		sleep 5
 		cpe_switch_off
