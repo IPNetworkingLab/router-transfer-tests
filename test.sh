@@ -1,6 +1,10 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (c) 2025, Matthieu Baerts.
+
+if [ "${DEBUG}" = 1 ]; then
+	set -x
+fi
 
 export NS=rt
 export HOSTS=(pho cli cpe cell net srv)
