@@ -119,7 +119,6 @@ iperf_test()
 		cpe_switch_on
 	done
 	killall iperf3 ifstat
-	bash
 }
 
 setup()
