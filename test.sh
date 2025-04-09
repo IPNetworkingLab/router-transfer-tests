@@ -10,7 +10,7 @@ fi
 : "${INPUT_SLEEP:=0}" ## sleep between switch between APs
 
 export NS=rt
-export HOSTS=(pho cli cpe cell net srv)
+export HOSTS=(pho cli cpe net srv)
 
 # TODO: make sure the following code is published
 # TODO: don't include these env vars here
