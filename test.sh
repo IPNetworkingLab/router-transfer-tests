@@ -6,7 +6,8 @@ if [ "${DEBUG}" = 1 ]; then
 	set -x
 fi
 
-: "${INPUT_TRACES:=$([[ "${1}" = "auto-"* ]] && echo 1)}"
+: "${INPUT_TRACES:=$([[ "${1}" = "auto-"* ]] && echo 1)}" # capture traces, 1 by default on auto- modes
+: "${INPUT_SLEEP:=0}" ## sleep between switch between APs
 
 export NS=rt
 export HOSTS=(pho cli cpe cell net srv)
@@ -84,6 +85,8 @@ cpe_switch_off()
 	ip_addr_del "${NS}_cli" cpe 0 3
 	ip_mptcp_del "${NS}_cli" 1
 
+	sleep "${INPUT_SLEEP}"
+
 	ip -n "${NS}_pho" link set "cli" up
 	ip_addr_add "${NS}_pho" cli 1 1
 
@@ -101,6 +104,8 @@ cpe_switch_on()
 	ip -n "${NS}_cli" link set "pho" down
 	ip_addr_del "${NS}_cli" pho 1 2
 	ip_mptcp_del "${NS}_cli" 2
+
+	sleep "${INPUT_SLEEP}"
 
 	ip -n "${NS}_cpe" link set dev "pho" up
 	ip -n "${NS}_cpe" link set dev "cli" up
@@ -155,7 +160,7 @@ start_capture()
 {
 	local out="traces/"
 	mkdir -p "${out}"
-	out+="$(date +%Y%m%d%H%M%S)_$(git describe --always --dirty)_${1}"
+	out+="$(date +%Y%m%d%H%M%S)_$(git describe --always --dirty)_sleep-${INPUT_SLEEP}_${1}"
 
 	# capture on the net router, having access to all paths
 	local iface ifaces=(cpe pho srv)
