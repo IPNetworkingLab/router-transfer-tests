@@ -6,6 +6,8 @@ if [ "${DEBUG}" = 1 ]; then
 	set -x
 fi
 
+: "${INPUT_TRACES:=$([[ "${1}" = "auto-"* ]] && echo 1)}"
+
 export NS=rt
 export HOSTS=(pho cli cpe cell net srv)
 
@@ -148,6 +150,32 @@ aioquic_test()
 	killall hypercorn http3_client ifstat
 }
 
+# $1: mode
+start_capture()
+{
+	local out="traces/"
+	mkdir -p "${out}"
+	out+="$(date +%Y%m%d%H%M%S)_$(git describe --always --dirty)_${1}"
+
+	# capture on the net router, having access to all paths
+	local iface ifaces=(cpe pho srv)
+	for iface in "${ifaces[@]}"; do
+		ip netns exec "${NS}_net" \
+			tcpdump -i "${iface}" -s 150 --immediate-mode --packet-buffered \
+				-w "${out}_${iface}.pcap" &
+	done
+
+	# give some time to TCPDump to start
+	for _ in $(seq 10); do
+		local stop=1
+		for iface in "${ifaces[@]}"; do
+			[ ! -s "${iface}" ] && stop=0
+		done
+		[ "${stop}" = 1 ] && break
+		sleep 0.1
+	done
+}
+
 setup()
 {
 	local suffix
@@ -223,6 +251,10 @@ setup()
 
 setup
 
+if [ "${INPUT_TRACES}" = 1 ]; then
+	start_capture "${1}"
+fi
+
 case "${1}" in
 	"auto-tcp-v4")
 		iperf_test 10.0.4.2
@@ -237,7 +269,7 @@ case "${1}" in
 		aioquic_test dead:beef:4::2
 		;;
 	*)
-		export -f cpe_switch_on cpe_switch_off iperf_test aioquic_test
+		export -f cpe_switch_on cpe_switch_off iperf_test aioquic_test start_capture
 		echo "Use 'ip netns' to list the netns."
 		echo "Then use 'ip netns exec <NETNS> <CMD>' to execute a command in the netns."
 		bash
