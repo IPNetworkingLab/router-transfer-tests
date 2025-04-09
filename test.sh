@@ -8,6 +8,9 @@ fi
 
 export NS=rt
 export HOSTS=(pho cli cpe cell net srv)
+
+# TODO: make sure the following code is published
+# TODO: don't include these env vars here
 export H3SERVPATH="../h3server/run-server.sh"
 export CURLPATH="../../curlh3/curl/src/curl"
 export CONDAPATH="/home/pbertrandvan/miniconda3"
