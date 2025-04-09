@@ -8,6 +8,10 @@ fi
 
 export NS=rt
 export HOSTS=(pho cli cpe cell net srv)
+export H3SERVPATH="../h3server/run-server.sh"
+export CURLPATH="../../curlh3/curl/src/curl"
+export CONDAPATH="/home/pbertrandvan/miniconda3"
+export AIOQUICPATH="/home/pbertrandvan/Documents/router_transfer/aioquic_transfer/modified-aioquic"
 
 cleanup()
 {
@@ -123,6 +127,21 @@ iperf_test()
 		cpe_switch_on
 	done
 	killall iperf3 ifstat
+}
+
+aioquic_test()
+{
+	ip netns exec "${NS}_srv" $H3SERVPATH &
+	sleep 5 # making sure the server is launched
+	ip netns exec "${NS}_cli" $AIOQUICPATH/run_h3.sh &
+	ip netns exec "${NS}_cli" ifstat -b -i cpe,pho &
+	for _ in $(seq 4); do
+		sleep 5
+		cpe_switch_off
+		sleep 5
+		cpe_switch_on
+	done
+	killall hypercorn http3_client ifstat
 }
 
 setup()
