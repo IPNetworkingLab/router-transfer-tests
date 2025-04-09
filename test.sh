@@ -223,10 +223,10 @@ setup()
 setup
 
 case "${1}" in
-	"auto")
+	"auto-tcp-v4")
 		iperf_test 10.0.4.2
 		;;
-	"auto-v6")
+	"auto-tcp-v6")
 		iperf_test dead:beef:4::2
 		;;
 	*)
