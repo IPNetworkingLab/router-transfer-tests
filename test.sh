@@ -230,7 +230,7 @@ case "${1}" in
 		iperf_test dead:beef:4::2
 		;;
 	*)
-		export -f cpe_switch_on cpe_switch_off iperf_test
+		export -f cpe_switch_on cpe_switch_off iperf_test aioquic_test
 		echo "Use 'ip netns' to list the netns."
 		echo "Then use 'ip netns exec <NETNS> <CMD>' to execute a command in the netns."
 		bash
