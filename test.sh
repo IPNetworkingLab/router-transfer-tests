@@ -132,11 +132,12 @@ iperf_test()
 	killall iperf3 ifstat
 }
 
+# $1: IP server
 aioquic_test()
 {
 	ip netns exec "${NS}_srv" $H3SERVPATH &
 	sleep 5 # making sure the server is launched
-	ip netns exec "${NS}_cli" $AIOQUICPATH/run_h3.sh &
+	ip netns exec "${NS}_cli" $AIOQUICPATH/run_h3.sh "${1}" &
 	ip netns exec "${NS}_cli" ifstat -b -i cpe,pho &
 	for _ in $(seq 4); do
 		sleep 5
@@ -228,6 +229,12 @@ case "${1}" in
 		;;
 	"auto-tcp-v6")
 		iperf_test dead:beef:4::2
+		;;
+	"auto-quic-v4")
+		aioquic_test 10.0.4.2
+		;;
+	"auto-quic-v6")
+		aioquic_test dead:beef:4::2
 		;;
 	*)
 		export -f cpe_switch_on cpe_switch_off iperf_test aioquic_test
