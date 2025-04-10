@@ -13,11 +13,8 @@ export NS=rt
 export HOSTS=(pho cli cpe net srv)
 
 # TODO: make sure the following code is published
-# TODO: don't include these env vars here
-export H3SERVPATH="../h3server/run-server.sh"
-export CURLPATH="../../curlh3/curl/src/curl"
-export CONDAPATH="/home/pbertrandvan/miniconda3"
-export AIOQUICPATH="/home/pbertrandvan/Documents/router_transfer/aioquic_transfer/modified-aioquic"
+export H3SERVPATH="" #Insert here the path of the script that launches the aioquic server
+export AIOQUICPATH="" #Insert here the path of the script that launches the modified aioquic HTTP3 client
 
 cleanup()
 {
@@ -144,7 +141,7 @@ aioquic_test()
 {
 	ip netns exec "${NS}_srv" $H3SERVPATH &
 	sleep 5 # making sure the server is launched
-	ip netns exec "${NS}_cli" $AIOQUICPATH/run_h3.sh "${1}" &
+	ip netns exec "${NS}_cli" $AIOQUICPATH "${1}" &
 	ip netns exec "${NS}_cli" ifstat -b -i cpe,pho &
 	for _ in $(seq 4); do
 		sleep 5
