@@ -125,7 +125,7 @@ iperf_test()
 {
 	ip netns exec "${NS}_srv" mptcpize run iperf3 -s -D
 	sleep .1 # making sure the daemon is launched
-	ip netns exec "${NS}_cli" mptcpize run iperf3 -c "${1}" -t 999 -i 0 -R &
+	ip netns exec "${NS}_cli" mptcpize run iperf3 -c "${1}" -t 999 -i 0 -P 4 -R &
 	ip netns exec "${NS}_cli" ifstat -b -i cpe,pho &
 	for _ in $(seq 4); do
 		sleep 5
