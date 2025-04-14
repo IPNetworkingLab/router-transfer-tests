@@ -11,6 +11,7 @@ fi
 
 export NS=rt
 export HOSTS=(pho cli cpe net srv)
+export NSS=()
 
 # TODO: make sure the following code is published
 export H3SERVPATH="" #Insert here the path of the script that launches the aioquic server
@@ -18,9 +19,8 @@ export AIOQUICPATH="" #Insert here the path of the script that launches the modi
 
 cleanup()
 {
-	local suffix
-	for suffix in "${HOSTS[@]}"; do
-		local ns="${NS}_${suffix}"
+	local ns
+	for ns in "${NSS[@]}"; do
 		ip netns pids "${ns}" | xargs -r kill
 		ip netns del "${ns}" >/dev/null 2>&1
 	done
@@ -184,6 +184,7 @@ setup()
 	for suffix in "${HOSTS[@]}"; do
 		local ns="${NS}_${suffix}"
 		ip netns add "${ns}"
+		NSS+=("${ns}")
 		ip -n "${ns}" link set lo up
 		ip netns exec "${ns}" sysctl -wq net.ipv4.ip_forward=1
 		ip netns exec "${ns}" sysctl -wq net.ipv6.conf.all.forwarding=1
