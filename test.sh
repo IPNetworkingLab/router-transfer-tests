@@ -250,31 +250,54 @@ setup()
 	ip_addr_add "${NS}_srv" net 4 2
 	ip_route_add_default "${NS}_srv" net 4 1 100
 	ip -n "${NS}_srv" mptcp limits set subflows 8
+
+	if [ "${INPUT_TRACES}" = 1 ]; then
+		start_capture "${1}"
+	fi
+
 }
 
-setup
+usage()
+{
+	echo "Usage:"
+	echo "${0} auto-{tcp|quic}-v{4|6}"
+	echo "${0} manual"
+}
 
-if [ "${INPUT_TRACES}" = 1 ]; then
-	start_capture "${1}"
-fi
+auto()
+{
+	case "${1}" in
+		"auto-tcp-v4")
+			iperf_test 10.0.4.2
+			;;
+		"auto-tcp-v6")
+			iperf_test dead:beef:4::2
+			;;
+		"auto-quic-v4")
+			aioquic_test 10.0.4.2
+			;;
+		"auto-quic-v6")
+			aioquic_test dead:beef:4::2
+			;;
+		*)
+			usage >&2
+			;;
+	esac
+}
 
 case "${1}" in
-	"auto-tcp-v4")
-		iperf_test 10.0.4.2
+	"auto-"*)
+		setup
+		auto "${@}"
 		;;
-	"auto-tcp-v6")
-		iperf_test dead:beef:4::2
-		;;
-	"auto-quic-v4")
-		aioquic_test 10.0.4.2
-		;;
-	"auto-quic-v6")
-		aioquic_test dead:beef:4::2
-		;;
-	*)
+	"manual")
+		setup
 		export -f cpe_switch_on cpe_switch_off iperf_test aioquic_test start_capture
 		echo "Use 'ip netns' to list the netns."
 		echo "Then use 'ip netns exec <NETNS> <CMD>' to execute a command in the netns."
 		bash
+		;;
+	*)
+		usage
 		;;
 esac
