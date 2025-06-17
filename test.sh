@@ -13,8 +13,7 @@ export NS=rt
 export HOSTS=(pho cli cpe net srv)
 export NSS=()
 
-# TODO: make sure the following code is published
-export H3SERVPATH="" #Insert here the path of the script that launches the aioquic server
+export H3SERVPATH="" #Insert here the path of the script that launches the HTTP3 server 
 export AIOQUICPATH="" #Insert here the path of the script that launches the modified aioquic HTTP3 client
 
 cleanup()
